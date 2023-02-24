@@ -1,0 +1,64 @@
+import requests
+from bs4 import BeautifulSoup
+import time
+import csv
+
+baseUrl = 'https://www.op.gg/'
+uri = 'champions?region=global&tier=silver&position=top'
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,/;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Referer': 'https://www.op.gg/',
+    'Origin': 'https://www.op.gg/'
+}
+
+def information():
+    stats = []
+    r = requests.get(baseUrl + uri,headers=headers)
+    soup = BeautifulSoup(r.content, "html.parser")
+    tableau = soup.find('tbody')
+    infos = tableau.find_all('tr')
+    for info in infos:
+            names = info.findAll('strong')
+            for i in names:
+                name = i.getText().strip()
+            winrate = info.find_all('td', class_='css-1wvfkid exo2f211')
+            for i in range(0, len(winrate), 3):
+                winrates = winrate[i]
+                wins = winrates.text
+            pickrate = info.find_all('td', class_='css-1wvfkid exo2f211')
+            for i in range(1, len(pickrate), 3):
+                pickrates = pickrate[i]
+                picks = pickrates.text
+            banrate = info.find_all('td', class_='css-1wvfkid exo2f211')
+            for i in range(2, len(banrate), 3):
+                banrates = banrate[i]    
+                bans = banrates.text
+            links = info.find('td', {'class': 'css-cym2o0 e1oulx2j6'})
+            liens = links.find('a')['href']
+            liens = (baseUrl + liens)
+                
+
+            fiches = {
+                "name": name,
+                "wins": wins,
+                "picks": picks,
+                "bans": bans,
+                "liens": liens,
+            }
+            stats.append(fiches)
+            print(stats)
+
+    with open('lol.csv', mode='w', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ["liens", "name", "wins", "picks", "bans"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for fiche in stats:
+            writer.writerow(fiche)
+
+    return stats
+
+
+information()
